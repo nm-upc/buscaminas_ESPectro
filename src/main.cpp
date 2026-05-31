@@ -763,8 +763,14 @@ void runGame() {
         bool joyBtn=(digitalRead(JOY_SW_PIN)==LOW);
         int dx=(rawX<1748)?-1:(rawX>2348)?1:0;
         int dy=(rawY<1748)?-1:(rawY>2348)?1:0;
-        if (btnB) return;
-
+        if (btnB) {
+            if (mnScore > bestScore) {
+                if (xSemaphoreTake(recordMutex, pdMS_TO_TICKS(200))==pdTRUE) {
+                    saveRecord(mnScore); xSemaphoreGive(recordMutex);
+                }
+            }
+            return;
+        }
         if (millis()-lastMove>150 && (dx||dy)) {
             int nx=constrain(mnCurX+dx,0,MINES_COLS-1);
             int ny=constrain(mnCurY+dy,0,MINES_ROWS-1);
@@ -793,8 +799,10 @@ void runGame() {
                     tft.setCursor(60,10); tft.print("BOOM!! :(");
                     playTone(200,400,0.15f);
                     delay(2000);
-                    if (xSemaphoreTake(recordMutex, pdMS_TO_TICKS(200))==pdTRUE) {
-                        saveRecord(mnScore); xSemaphoreGive(recordMutex);
+                    if (mnScore > bestScore) {
+                        if (xSemaphoreTake(recordMutex, pdMS_TO_TICKS(200))==pdTRUE) {
+                            saveRecord(mnScore); xSemaphoreGive(recordMutex);
+                        }
                     }
                     return;
                 } else {
@@ -812,8 +820,10 @@ void runGame() {
                         tft.setCursor(50,10); tft.print("GUANYAT!");
                         playTone(523,100,0.1f); playTone(659,100,0.1f); playTone(784,200,0.12f);
                         delay(2000);
-                        if (xSemaphoreTake(recordMutex, pdMS_TO_TICKS(200))==pdTRUE) {
+                        if (total_safe > bestScore) {
+                            if (xSemaphoreTake(recordMutex, pdMS_TO_TICKS(200))==pdTRUE) {
                             saveRecord(total_safe); xSemaphoreGive(recordMutex);
+                            }
                         }
                         return;
                     }
